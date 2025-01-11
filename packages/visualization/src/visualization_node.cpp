@@ -487,6 +487,7 @@ void VisualizationNode::publishMap() const {
     visualization_msgs::msg::Marker msg;
     msg.header.stamp = now();
     msg.header.frame_id = "world";
+    // msg.header.frame_id = "odom_ekf";
     msg.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
     msg.action = visualization_msgs::msg::Marker::ADD;
     msg.color = color::gray(0.6);
@@ -519,7 +520,7 @@ void VisualizationNode::publishNavigationMesh() const {
 
     visualization_msgs::msg::Marker msg;
     msg.header.stamp = now();
-    msg.header.frame_id = "odom_ekf";
+    msg.header.frame_id = "world";
     msg.type = visualization_msgs::msg::Marker::SPHERE_LIST;
     msg.action = visualization_msgs::msg::Marker::ADD;
     msg.color = color::white(0.8);
@@ -551,7 +552,7 @@ void VisualizationNode::publishNavigationRoute() const {
 
     visualization_msgs::msg::Marker msg;
     msg.header.stamp = now();
-    msg.header.frame_id = "odom_ekf";
+    msg.header.frame_id = "world";
     msg.type = visualization_msgs::msg::Marker::LINE_STRIP;
     msg.action = visualization_msgs::msg::Marker::ADD;
     msg.color = color::blue(0.5);

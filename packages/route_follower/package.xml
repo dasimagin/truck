@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>routing</name>
+  <name>route_follower</name>
   <version>0.0.0</version>
-  <description>routing</description>
-  <maintainer email="apmilko@outlook.com">apmilko</maintainer>
+  <description>route_follower</description>
+  <maintainer email="fun1ham@gmail.com">xs1nus</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>map</depend>
-  <depend>navigation</depend>
   <depend>truck_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>Boost</depend>
+  <depend>speed</depend>
+  <depend>collision</depend>
+  <depend>tf2</depend>
   <depend>tf2_ros</depend>
 
   <export>

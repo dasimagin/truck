@@ -1,0 +1,22 @@
+launch:
+- arg:
+    name: "model_config"
+    default: "$(find-pkg-share model)/config/model.yaml"
+- arg:
+    name: "simulation"
+    default: "false"
+- node:
+    pkg: "route_follower"
+    exec: "route_follower_node"
+    name: "route_follower_node"
+    output: "log"
+    param:
+    - { name: "use_sim_time", value: "$(var simulation)" }
+    - { name: "model_config", value: "$(var model_config)" }
+    - { name: "period", value: 0.1 }
+    - { name: "resolution", value: 0.02 }
+    - { name: "check_in_distance", value: 0.30 }
+    - { name: "safety_margin", value: 0.15 }
+    - { name: "distance_to_obstacle", value: 1.5 }
+    - { name: "acceleration/min", value: -0.5 }
+    - { name: "acceleration/max", value: 0.3 }

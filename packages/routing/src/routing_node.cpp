@@ -123,6 +123,10 @@ void RoutingNode::initializeParams() {
 }
 
 void RoutingNode::initializeTopicHandlers() {
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    tf_buffer_->setUsingDedicatedThread(true);
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
     const auto qos = static_cast<rmw_qos_reliability_policy_t>(
         this->declare_parameter<int>("qos", RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT));
 
@@ -147,11 +151,33 @@ void RoutingNode::initializeTopicHandlers() {
 }
 
 void RoutingNode::onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg) {
-    state_.ego = geom::toVec2(*msg);
+    const auto tf_opt = getLatestTranform(msg->header.frame_id, target_frame_);
+    if (!tf_opt) {
+        RCLCPP_WARN(
+            this->get_logger(),
+            "Can't lookup transform from '%s' to '%s', ignore odometry!",
+            msg->header.frame_id.c_str(),
+            target_frame_.c_str());
+
+        return;
+    }
+
+    state_.ego = tf_opt->apply(geom::toVec2(*msg));
 }
 
 void RoutingNode::onFinish(const geometry_msgs::msg::PointStamped::SharedPtr msg) {
-    state_.finish = geom::toVec2(*msg);
+    const auto tf_opt = getLatestTranform(msg->header.frame_id, target_frame_);
+    if (!tf_opt) {
+        RCLCPP_WARN(
+            this->get_logger(),
+            "Can't lookup transform from '%s' to '%s', ignore route finish point!",
+            msg->header.frame_id.c_str(),
+            target_frame_.c_str());
+
+        return;
+    }
+
+    state_.finish = tf_opt->apply(geom::toVec2(*msg));
 
     if (state_.ego.has_value()) {
         updateRoute();
@@ -214,6 +240,15 @@ void RoutingNode::publishRoute() const {
     }
 
     signals_.route->publish(msg);
+}
+
+std::optional<geom::Transform> RoutingNode::getLatestTranform(
+    const std::string& source, const std::string& target) const {
+    try {
+        return geom::toTransform(tf_buffer_->lookupTransform(target, source, rclcpp::Time(0)));
+    } catch (const tf2::TransformException& ex) {
+        return std::nullopt;
+    }
 }
 
 }  // namespace truck::routing

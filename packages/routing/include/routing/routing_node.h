@@ -7,6 +7,8 @@
 #include "truck_msgs/msg/navigation_mesh.hpp"
 #include "truck_msgs/msg/navigation_route.hpp"
 
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/point_stamped.hpp>
 
@@ -14,6 +16,7 @@
 
 #include <boost/geometry.hpp>
 #include "geom/boost/point.h"
+#include "geom/transform.h"
 
 namespace truck::routing {
 
@@ -63,6 +66,9 @@ class RoutingNode : public rclcpp::Node {
     void publishMesh() const;
     void publishRoute() const;
 
+    std::optional<geom::Transform> getLatestTranform(
+        const std::string& source, const std::string& target) const;
+
     struct Slots {
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom = nullptr;
         rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr finish = nullptr;
@@ -102,6 +108,11 @@ class RoutingNode : public rclcpp::Node {
     std::unique_ptr<map::Map> map_ = nullptr;
     std::unique_ptr<navigation::mesh::MeshBuilder> mesh_builder_ = nullptr;
     std::unique_ptr<navigation::graph::GraphBuilder> graph_builder_ = nullptr;
+
+    std::unique_ptr<tf2_ros::Buffer> tf_buffer_ = nullptr;
+    std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
+
+    const std::string target_frame_ = "world";
 };
 
 }  // namespace truck::routing
