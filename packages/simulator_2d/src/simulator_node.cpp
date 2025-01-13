@@ -182,30 +182,6 @@ void SimulatorNode::publishHardwareOdometryMessage(const TruckState& truck_state
     signals_.hardware_odometry->publish(odom_msg);
 }
 
-void SimulatorNode::publishTransformMessage(const TruckState& truck_state) {
-    if (!transforms_.ekf_base.has_value()) {
-        return;
-    }
-
-    const tf2::Transform& tf_ekf_base = *transforms_.ekf_base;
-    const auto pose = truck_state.odomBasePose();
-
-    tf2::Transform tf_world_base;
-    tf2::fromMsg(geom::msg::toPose(pose), tf_world_base);
-
-    const tf2::Transform tf_world_ekf = tf_world_base * tf_ekf_base.inverse();
-
-    geometry_msgs::msg::TransformStamped tf_msg_world_ekf;
-    tf_msg_world_ekf.header.frame_id = "world";
-    tf_msg_world_ekf.child_frame_id = "odom_ekf";
-    tf_msg_world_ekf.header.stamp = truck_state.time();
-    tf2::toMsg(tf_world_ekf, tf_msg_world_ekf.transform);
-
-    tf2_msgs::msg::TFMessage tf_msg;
-    tf_msg.transforms.push_back(tf_msg_world_ekf);
-    signals_.tf_publisher->publish(tf_msg);
-}
-
 void SimulatorNode::publishTelemetryMessage(const TruckState& truck_state) {
     truck_msgs::msg::HardwareTelemetry telemetry_msg;
     telemetry_msg.header.frame_id = "base";
@@ -298,7 +274,6 @@ void SimulatorNode::publishSimulationState() {
     publishTime(truck_state);
     publishSimulatorLocalizationMessage(truck_state);
     publishHardwareOdometryMessage(truck_state);
-    publishTransformMessage(truck_state);
     publishTelemetryMessage(truck_state);
     publishSimulationStateMessage(truck_state);
     publishLaserScanMessage(truck_state);

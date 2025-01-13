@@ -1,0 +1,43 @@
+launch:
+  - arg: { name: "simulation", default: "false" }
+  - arg: { name: "lidar_map_config", default: "" }
+  - node:
+      pkg: "localization"
+      exec: "localization_node"
+      name: "localization_node"
+      output: "log"
+      param:
+        - { name: "use_sim_time", value: "$(var simulation)" }
+        - { name: "period", value: 0.1 }
+        - { name: "verbose", value: true }
+        - { name: "icp_config", value: "$(find-pkg-share localization)/config/icp.yaml" }
+
+        - name: "bbox_filter"
+          param:
+            - { name: "enable", value: true }
+            - { name: "radius", value: 8.0 }
+            - { name: "z_min", value: 0.0 }
+            - { name: "z_max", value: 2.0 }
+
+        - name: "local_scan"
+          param:
+            - name: "rendering"
+              param:
+                - name: "bbox_filtered"
+                  param:
+                    - { name: "enable", value: true }
+
+        - name: "global_scan"
+          param:
+            - { name: "config", value: "$(var lidar_map_config)" }
+
+            - name: "rendering"
+              param:
+                - name: "main"
+                  param:
+                    - { name: "enable", value: true }
+                    - { name: "period", value: 1.0 }
+
+                - name: "bbox_filtered"
+                  param:
+                    - { name: "enable", value: true }

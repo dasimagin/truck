@@ -2,6 +2,7 @@ launch:
 - arg: { name: "simulation", default: "false" }
 - arg: { name: "qos", default: "0" }
 - arg: { name: "map_config", default: "$(find-pkg-share map)/data/map_6.geojson" }
+- arg: { name: "lidar_map_config", default: "/truck/packages/lidar_map/data/map_6.mcap" }
 
 - include:
     file: $(find-pkg-share model)/launch/model_tf.yaml
@@ -32,6 +33,12 @@ launch:
     arg:
     - { name: "simulation", value: "$(var simulation)" }
     - { name: "qos", value: "$(var qos)" }
+
+- include:
+   file: $(find-pkg-share localization)/launch/localization.yaml
+   arg:
+    - { name: "simulation", value: "$(var simulation)" }
+    - { name: "lidar_map_config", value: "$(var lidar_map_config)" }
 
 - include:
     file: $(find-pkg-share occupancy_grid)/launch/occupancy_grid.yaml
