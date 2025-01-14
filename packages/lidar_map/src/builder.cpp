@@ -273,40 +273,83 @@ geom::Poses Builder::optimizePoseGraph(size_t iterations) {
 /**
  * Collecting information about ICP edges
  */
-ICPEdgesInfo Builder::calculateICPEdgesInfo() const {
-    ICPEdgesInfo icp_edges_info;
+PoseGraphInfo Builder::calculatePoseGraphInfo() const {
+    PoseGraphInfo pose_graph_info;
     for (auto it = optimizer_.activeEdges().begin(); it != optimizer_.activeEdges().end(); ++it) {
         const g2o::OptimizableGraph::Edge* edge = *it;
         const g2o::EdgeSE2* edge_se2 = dynamic_cast<const g2o::EdgeSE2*>(edge);
         const number_t* info = edge_se2->informationData();
+        const g2o::OptimizableGraph::Vertex* from_edge =
+            dynamic_cast<const g2o::OptimizableGraph::Vertex*>(edge_se2->vertex(0));
+        const g2o::OptimizableGraph::Vertex* to_edge =
+            dynamic_cast<const g2o::OptimizableGraph::Vertex*>(edge_se2->vertex(1));
         if (info[0] == params_.icp_edge_weight) {
-            const g2o::OptimizableGraph::Vertex* from_edge =
-                dynamic_cast<const g2o::OptimizableGraph::Vertex*>(edge_se2->vertex(0));
-            const g2o::OptimizableGraph::Vertex* to_edge =
-                dynamic_cast<const g2o::OptimizableGraph::Vertex*>(edge_se2->vertex(1));
-            icp_edges_info.push_back(ICPEdgeInfo{
-                .from_edge = from_edge->id(), .to_edge = to_edge->id(), .error_val = edge->chi2()});
+            pose_graph_info.edges.push_back(EdgeInfo{
+                .from_edge = from_edge->id(),
+                .to_edge = to_edge->id(),
+                .error_val = edge->chi2(),
+                .type = "icp"});
+        } else {
+            pose_graph_info.edges.push_back(EdgeInfo{
+                .from_edge = from_edge->id(),
+                .to_edge = to_edge->id(),
+                .error_val = edge->chi2(),
+                .type = "odometry"});
         }
     }
-    return icp_edges_info;
+    for (auto it = optimizer_.activeVertices().begin(); it != optimizer_.activeVertices().end();
+         ++it) {
+        const g2o::OptimizableGraph::Vertex* vertex = *it;
+        const g2o::VertexSE2* vertex_se2 = dynamic_cast<const g2o::VertexSE2*>(vertex);
+        Eigen::Vector3d estimate;
+        vertex_se2->getEstimateData(estimate.data());
+        pose_graph_info.vertices.push_back(VertexInfo{
+            .id = vertex_se2->id(), .x = estimate[0], .y = estimate[1], .theta = estimate[2]});
+    }
+    return pose_graph_info;
 }
 
 /**
  * Writing information about icp edges to a json file
  */
-void Builder::writeICPEdgesInfoToJSON(
-    const std::string& json_path, const ICPEdgesInfo& icp_edges_info) const {
+void Builder::writePoseGraphInfoToJSON(
+    const std::string& json_path, const PoseGraphInfo& pose_graph_info, size_t iteration) const {
     nlohmann::json json_data;
-    for (const auto& icp_edge_info : icp_edges_info) {
-        json_data.push_back(
-            {{"from_edge", icp_edge_info.from_edge},
-             {"to_edge", icp_edge_info.to_edge},
-             {"error_val", icp_edge_info.error_val}});
+
+    std::ifstream input_file(json_path);
+    if (input_file.is_open()) {
+        input_file >> json_data;
+        input_file.close();
     }
-    std::ofstream file(json_path);
-    if (file.is_open()) {
-        file << json_data.dump(4);
-        file.close();
+
+    nlohmann::json current_iteration_data;
+
+    for (const auto& vertex : pose_graph_info.vertices) {
+        nlohmann::json vertex_json;
+        vertex_json["id"] = vertex.id;
+        vertex_json["x"] = vertex.x;
+        vertex_json["y"] = vertex.y;
+        vertex_json["theta"] = vertex.theta;
+
+        current_iteration_data["vertices"].push_back(vertex_json);
+    }
+
+    for (const auto& edge : pose_graph_info.edges) {
+        nlohmann::json edge_json;
+        edge_json["from_edge"] = edge.from_edge;
+        edge_json["to_edge"] = edge.to_edge;
+        edge_json["error_val"] = edge.error_val;
+        edge_json["type"] = edge.type;
+
+        current_iteration_data["edges"].push_back(edge_json);
+    }
+
+    json_data[std::to_string(iteration)] = current_iteration_data;
+
+    std::ofstream output_file(json_path);
+    if (output_file.is_open()) {
+        output_file << json_data.dump(4);
+        output_file.close();
     } else {
         std::cerr << "Error when opening a file for writing: " << json_path << std::endl;
     }

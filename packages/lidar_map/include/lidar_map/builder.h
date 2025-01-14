@@ -15,13 +15,29 @@ struct BuilderParams {
     bool verbose = true;
 };
 
-struct ICPEdgeInfo {
+struct EdgeInfo {
     size_t from_edge;
     size_t to_edge;
     double error_val;
+    std::string type;
 };
 
-using ICPEdgesInfo = std::vector<ICPEdgeInfo>;
+struct VertexInfo {
+    size_t id;
+    double x;
+    double y;
+    double theta;
+};
+
+using EdgesInfo = std::vector<EdgeInfo>;
+using VerticesInfo = std::vector<VertexInfo>;
+
+struct PoseGraphInfo {
+    EdgesInfo edges;
+    VerticesInfo vertices;
+
+    PoseGraphInfo() : edges(), vertices() {}
+};
 
 class Builder {
   public:
@@ -34,10 +50,10 @@ class Builder {
 
     geom::Poses optimizePoseGraph(size_t iterations);
 
-    ICPEdgesInfo calculateICPEdgesInfo() const;
+    PoseGraphInfo calculatePoseGraphInfo() const;
 
-    void writeICPEdgesInfoToJSON(
-        const std::string& json_path, const ICPEdgesInfo& icp_edges_info) const;
+    void writePoseGraphInfoToJSON(
+        const std::string& json_path, const PoseGraphInfo& pose_graph_info, size_t iteration) const;
 
     Clouds transformClouds(
         const geom::Poses& poses, const Clouds& clouds, bool inverse = false) const;
