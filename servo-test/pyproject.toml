@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "lab-servo-test"
+version = "0.1.0"
+description = ""
+authors = ["Andrew Bond <andbondstyle@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "~3.11"
+foxglove-websocket = "^0.1.2"
+mcap = "^1.2.2"
+pydantic = "^2.10.6"
+pyserial = "^3.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
