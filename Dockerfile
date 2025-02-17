@@ -528,6 +528,25 @@ RUN wget -qO - https://github.com/borglab/gtsam/archive/refs/tags/${GTSAM_VERSIO
     && make -j$(nproc) install \
     && rm -rf /tmp/*
 
+### INSTALL LIVOX SDK2
+
+ARG LIVOX_VERSION="1.2.5"
+
+RUN wget -qO - https://github.com/Livox-SDK/Livox-SDK2/archive/refs/tags/v${LIVOX_VERSION}.tar.gz | tar -xz \
+    && cd Livox-SDK2-${LIVOX_VERSION} && mkdir build && cd build \
+    && cmake .. && make -j$(nproc) && make install \
+    && rm -rf /tmp/*
+
+### INSTALL RAPIDJSON
+
+ARG RAPIDJSON_VERSION="1.1.0"
+
+RUN wget -qO - https://github.com/Tencent/rapidjson/archive/refs/tags/v${RAPIDJSON_VERSION}.tar.gz | tar -xz \
+    && cd rapidjson-${RAPIDJSON_VERSION} && mkdir build && cd build \
+    && cmake .. -DRAPIDJSON_BUILD_DOC=OFF -DRAPIDJSON_BUILD_EXAMPLES=OFF -DRAPIDJSON_BUILD_TESTS=OFF \
+    && make -j$(nproc) && make install \
+    && rm -rf /tmp/*
+
 ### INSTALL DEV PKGS
 
 COPY requirements.txt /tmp/requirements.txt

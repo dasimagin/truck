@@ -1,0 +1,9 @@
+launch:
+- include:
+    file: $(find-pkg-share livox_driver)/launch/livox_driver.py
+    arg:
+    - { name: "frame_id", value: "lidar_link" }
+    - { name: "publish_freq", value: "10" }
+    - { name: "scan_pattern_mode", value: "0" }
+    - { name: "lidar_ip", value: "192.168.2.10" }
+    - { name: "host_iface", value: "eth1" }

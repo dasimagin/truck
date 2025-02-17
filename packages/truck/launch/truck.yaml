@@ -1,6 +1,6 @@
 launch:
 - include:
-   file: $(find-pkg-share truck)/launch/lidar.yaml
+   file: $(find-pkg-share truck)/launch/lidar3d.yaml
 
 - include:
     file: $(find-pkg-share truck)/launch/camera.yaml
