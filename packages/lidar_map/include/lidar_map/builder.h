@@ -52,6 +52,8 @@ struct BuilderParams {
 
 class Builder {
   public:
+    std::vector<CloudWithAttributes> clouds_with_attributes;
+
     Builder(const BuilderParams& params);
 
     std::pair<geom::Poses, Clouds> sliceDataByPosesProximity(
@@ -73,6 +75,11 @@ class Builder {
     Clouds applyDynamicFilter(
         const geom::Poses& poses, const Clouds& clouds_base, double clouds_search_rad,
         size_t min_sim_points_count, double max_sim_points_dist) const;
+
+    Eigen::VectorXf calculateWeightsForReadingCloud(
+        const Cloud& reading_cloud, const Cloud& reference_cloud);
+
+    Eigen::Matrix3Xf calculateNormalsForReferenceCloud(const Cloud& reference_cloud);
 
   private:
     ICP icp_;

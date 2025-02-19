@@ -371,6 +371,37 @@ Cloud Builder::mergeClouds(const Clouds& clouds) {
     return merged_cloud;
 }
 
+/**
+ * get outliers weights for cloud
+ */
+Eigen::VectorXf Builder::calculateWeightsForReadingCloud(
+    const Cloud& reading_cloud, const Cloud& reference_cloud) {
+    DataPoints reference_dp = toDataPoints(reference_cloud);
+    DataPoints reading_dp = toDataPoints(reading_cloud);
+
+    icp_.referenceDataPointsFilters.apply(reference_dp);
+    icp_.matcher->init(reference_dp);
+    Matcher::Matches matches = icp_.matcher->findClosests(reading_dp);
+    Matcher::OutlierWeights outlierWeights =
+        icp_.outlierFilters.compute(reading_dp, reference_dp, matches);
+
+    Eigen::VectorXf weights(outlierWeights.cols());
+    for (size_t i = 0; i < outlierWeights.cols(); i++) {
+        weights(i) = outlierWeights(0, i);
+    }
+
+    return weights;
+}
+
+/**
+ * get normals for cloud
+ */
+Eigen::Matrix3Xf Builder::calculateNormalsForReferenceCloud(const Cloud& reference_cloud) {
+    DataPoints reference_dp = toDataPoints(reference_cloud);
+    icp_.referenceDataPointsFilters.apply(reference_dp);
+    return reference_dp.getDescriptorViewByName("normals");
+}
+
 namespace {
 
 std::vector<size_t> findNearestIdsInsideBox(

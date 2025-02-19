@@ -46,3 +46,31 @@ ros2 run lidar_map lidar_map_executable
   --mcap-log data/logs/mcap/cloud_atrium_XX_YY_ZZ_log
   --json-log data/logs/json/cloud_atrium_XX_YY_ZZ_log.json
 ```
+### Debug
+
+To visualize the normals or outliers weights, add this to main.cpp.
+
+```c++
+//Calculate attributes for reference and reading clouds
+  CloudWithAttributes reference_cloud_with_attr = {
+        .cloud = clouds[1],
+        .normals = builder.calculateNormalsForReferenceCloud(clouds[1]),
+        };
+
+  CloudWithAttributes reading_cloud_with_attr = {
+        .cloud = clouds[0],
+        .weights = builder.calculateWeightsForReadingCloud(clouds[0], clouds[1]),
+        };
+
+  serialization::writer::MCAPWriter::writeCloudWithAttributes(
+      "data/logs/reference_cloud_with_attr", // path where the mcap file will be saved
+      reference_cloud_with_attr,
+      70, // percentage of normals to be visualized
+      "world"); // frame name
+
+  serialization::writer::MCAPWriter::writeCloudWithAttributes(
+      "data/logs/reading_cloud_with_attr", // path where the mcap file will be saved
+      reading_cloud_with_attr,
+      70, // percentage of normals to be visualized
+      "world"); // frame name
+```
