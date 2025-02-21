@@ -46,6 +46,14 @@ outlierFilters:
   - MinDistOutlierFilter:
       minDist: 0.01  # Минимальное расстояние до ближайшей точки.
 
+  - TrimmedDistOutlierFilter:
+      ratio: 0.9 # Удаляет 10% точек с наибольшими расстояниями.
+
+  - RobustOutlierFilter:
+      robustFct: cauchy
+      tuning: 1.0
+      distanceType: point2plane
+
 errorMinimizer:
   PointToPlaneErrorMinimizer:
    force2D: 1 # Так как все облака находятся в одной плоскости

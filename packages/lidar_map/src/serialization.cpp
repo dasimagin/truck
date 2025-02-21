@@ -345,6 +345,58 @@ void MCAPWriter::writeCloud(
     writer.write(msg::toPointCloud2(cloud, frame_name), topic_name, getTime());
 }
 
+void MCAPWriter::writeCloudWithAttributes(
+    const std::string& mcap_path, const CloudWithAttributes& cloud_with_attributes,
+    double normals_ratio, std::string frame_name) {
+    rosbag2_cpp::Writer writer;
+    writer.open(mcap_path);
+    writer.write(msg::toPointCloud2(cloud_with_attributes.cloud, frame_name), "cloud", getTime());
+    std::cout << cloud_with_attributes.normals.has_value() << ' '
+              << cloud_with_attributes.weights.has_value() << '\n';
+    if (cloud_with_attributes.normals.has_value()) {
+        const Eigen::Matrix3Xf normals = cloud_with_attributes.normals.value();
+        visualization_msgs::msg::MarkerArray msg_array;
+        size_t points_count = cloud_with_attributes.cloud.cols();
+        size_t step =
+            static_cast<size_t>(points_count / (points_count * (1 - (normals_ratio / 100))));
+        for (size_t i = 0; i < points_count; i += step) {
+            visualization_msgs::msg::Marker msg_;
+            msg_.header.frame_id = frame_name;
+            msg_.id = i;
+            msg_.type = visualization_msgs::msg::Marker::ARROW;
+            msg_.action = visualization_msgs::msg::Marker::ADD;
+            msg_.color = toColorRGBA(0.5, 1, 0, 0);
+
+            msg_.pose.position.x = cloud_with_attributes.cloud(0, i);
+            msg_.pose.position.y = cloud_with_attributes.cloud(1, i);
+            msg_.pose.position.z = cloud_with_attributes.cloud(2, i);
+
+            // Get direction vector components for the normal direction
+            double dir_x = normals(0, i) - cloud_with_attributes.cloud(0, i);
+            double dir_y = normals(1, i) - cloud_with_attributes.cloud(1, i);
+            msg_.scale = toVector3(0.6, 0.06, 0.06);
+            // Get yaw angle from the direction vector using atan2
+            double yaw = std::atan2(dir_y, dir_x);
+            msg_.pose.orientation = geom::msg::toQuaternion(truck::geom::Angle(yaw));
+
+            msg_array.markers.push_back(msg_);
+        }
+
+        writer.write(msg_array, "normals", getTime());
+    }
+
+    if (cloud_with_attributes.weights.has_value()) {
+        Cloud cloud = cloud_with_attributes.cloud;
+        const Eigen::VectorXf& weights = cloud_with_attributes.weights.value();
+
+        for (size_t i = 0; i < cloud.cols(); i++) {
+            cloud(3, i) = weights(i);
+        }
+
+        writer.write(msg::toPointCloud2(cloud, frame_name), "weights", getTime());
+    }
+}
+
 }  // namespace writer
 
 }  // namespace truck::lidar_map::serialization
